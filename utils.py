@@ -30,3 +30,49 @@ class Agent():
             "Respond with only a single numeric value representing the predicted price. "
             "Do not include any explanation, units, or extra text."
         )
+    def _get_stock_history_data(self, date: datetime) -> pd.DataFrame:
+        start_date = date - timedelta(days=self.config['days'])
+        print("Ticker:", self.config['stock_symbol'])
+        print("Start:", start_date)
+        print("End:", date)
+        stock_data = yf.download(
+            self.config['stock_symbol'],
+            start=start_date,
+            end=date,
+            auto_adjust=True,
+            progress=False
+        )
+        print(stock_data.shape)
+        print(stock_data.head())
+        if stock_data.empty:
+            raise ValueError(
+                f"No data returned for symbol '{self.config['stock_symbol']}' between "
+                f"{start_date.date()} and {date.date()}. "
+                "Check your SSL certificates and that the symbol is valid."
+            )
+        return stock_data
+    def _get_stock_news_titles(self, date: datetime) -> list:
+        try:
+            stock = yf.Ticker(self.config['stock_symbol'])
+            stock_info = stock.info
+            stock_name = stock_info.get('longName', self.config['stock_symbol'])
+        except Exception:
+            stock_name = self.config['stock_symbol']
+
+        previous_date = date - timedelta(days=1)
+        start_date = previous_date.strftime("%Y-%m-%d")
+        end_date = date.strftime("%Y-%m-%d")
+
+        try:
+            all_articles = self.newsapi.get_everything(
+                q=stock_name,
+                from_param=start_date,
+                to=end_date,
+                language='en',
+                sort_by='relevancy'
+            )
+            titles = [article['title'] for article in all_articles['articles']]
+        except Exception as e:
+            print(f"\nWarning: Could not fetch news ({e}). Proceeding without news.")
+            titles = []
+        return titles
