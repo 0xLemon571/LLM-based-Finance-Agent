@@ -94,4 +94,55 @@ class Agent():
             print(f"\nWarning: Could not fetch news ({e}). Proceeding without news.")
             titles = []
         return titles
+    def backtesting(self, start_date: datetime, end_date: datetime, verbose: bool = False) -> pd.DataFrame:
+        stock_history_data = yf.download(
+            self.config['stock_symbol'],
+            start=start_date,
+            end=end_date + timedelta(days=1),
+            auto_adjust=True,
+            progress=False
+        )
+
+        if stock_history_data.empty:
+            raise ValueError(
+                f"No historical data returned for '{self.config['stock_symbol']}'. "
+                "This is likely an SSL certificate issue. Run:\n"
+                "  /Applications/Python\\ 3.13/Install\\ Certificates.command\n"
+                "or:  pip install --upgrade certifi"
+            )
+
+        # Flatten MultiIndex columns if present (yfinance ≥0.2.x)
+        if isinstance(stock_history_data.columns, pd.MultiIndex):
+            stock_history_data.columns = stock_history_data.columns.get_level_values(0)
+
+        stock_history_data.reset_index(inplace=True)
+
+        # Normalise the date column name (may be 'Date' or 'Datetime')
+        date_col = 'Date' if 'Date' in stock_history_data.columns else stock_history_data.columns[0]
+
+        results = []
+        for i, date in enumerate(stock_history_data[date_col]):
+            actual_price = float(stock_history_data['Close'].iloc[i])
+            predicted_price = self.predict(date, verbose)
+            results.append({
+                'Date': date.strftime("%Y-%m-%d") if hasattr(date, 'strftime') else str(date),
+                'Predicted Price': predicted_price,
+                'Actual Price': actual_price
+            })
+
+        results_df = pd.DataFrame(results)
+        actual_prices = results_df['Actual Price'].dropna().values
+        predicted_prices = results_df['Predicted Price'].dropna().values
+
+        mse  = mean_squared_error(actual_prices, predicted_prices)
+        rmse = np.sqrt(mse)
+        mae  = mean_absolute_error(actual_prices, predicted_prices)
+        r2   = r2_score(actual_prices, predicted_prices)
+        ndei = rmse / np.std(actual_prices)
+
+        print(f"\nMSE:  {mse:.4f}")
+        print(f"RMSE: {rmse:.4f}")
+        print(f"MAE:  {mae:.4f}")
+        print(f"R²:   {r2:.4f}")
+        print(f"NDEI: {ndei:.4f}")
     
