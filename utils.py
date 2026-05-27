@@ -30,6 +30,24 @@ class Agent():
             "Respond with only a single numeric value representing the predicted price. "
             "Do not include any explanation, units, or extra text."
         )
+    def predict(self, date: datetime, verbose: bool = False) -> float:
+        stock_history_data = self._get_stock_history_data(date)
+        stock_news_titles = self._get_stock_news_titles(date)
+        inputs = self.template.format(stock_history_data=stock_history_data, stock_news_titles=stock_news_titles)
+        if verbose:
+            print(inputs)
+        max_retries = 5
+
+        for attempt in range(max_retries):
+            try:
+                response = model.generate_content(inputs)
+                return float(response.text.strip())
+            except Exception as e:
+                print(f"Retrying... {attempt + 1}/{max_retries}")
+                print("Actual error:", repr(e))
+                time.sleep(2)
+
+        raise RuntimeError("Maximum retries exceeded")
     def _get_stock_history_data(self, date: datetime) -> pd.DataFrame:
         start_date = date - timedelta(days=self.config['days'])
         print("Ticker:", self.config['stock_symbol'])
@@ -76,3 +94,4 @@ class Agent():
             print(f"\nWarning: Could not fetch news ({e}). Proceeding without news.")
             titles = []
         return titles
+    
