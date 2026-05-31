@@ -145,4 +145,17 @@ class Agent():
         print(f"MAE:  {mae:.4f}")
         print(f"R²:   {r2:.4f}")
         print(f"NDEI: {ndei:.4f}")
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(results_df['Date'], results_df['Predicted Price'], label='Predicted', marker='o')
+        plt.plot(results_df['Date'], results_df['Actual Price'],    label='Actual',    marker='x')
+        plt.xlabel('Date')
+        plt.ylabel('Price')
+        plt.title('Predicted vs Actual Stock Prices')
+        plt.legend()
+        plt.xticks(rotation=45)
+        plt.grid(True)
+        plt.tight_layout()
+        plt.show()
+        return results_df
     
