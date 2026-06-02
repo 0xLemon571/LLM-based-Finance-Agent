@@ -1,4 +1,5 @@
 import time
+import os
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -8,7 +9,8 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-genai.configure(api_key='gemini_api_key_here')
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel("gemini-2.5-flash")
 
