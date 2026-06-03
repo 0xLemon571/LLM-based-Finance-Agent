@@ -149,7 +149,7 @@ This project is built for **educational purposes only**. Stock price predictions
 ```
 MIT License
 
-Copyright (c) 2026 Gurpreet Kaur (Original Work)
+Copyright (c) 2026 Prakhar Tyagi
 ```
 
 See [`LICENSE`](./LICENSE) for full terms.
